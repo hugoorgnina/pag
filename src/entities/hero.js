@@ -272,7 +272,7 @@ export class Hero {
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.wallTimer -= dt;
     this.coyote -= dt;
-    this.jumpBuffer = input.jump ? 0.12 : this.jumpBuffer - dt;
+    this.jumpBuffer = input.jump ? 0.15 : this.jumpBuffer - dt;
 
     // Ride moving platforms.
     if (this.grounded && this.groundCollider?.delta) this.position.add(this.groundCollider.delta);
@@ -289,7 +289,7 @@ export class Hero {
     // Gravity (variable jump height: releasing jump early cuts the rise).
     if (this.state !== 'gpSpin' && this.state !== 'gp' && !(this.state === 'dead' && this.grounded)) {
       let g = HERO.gravity;
-      if ((this.state === 'jump1' || this.state === 'jump2') && !input.jumpHeld && this.vy > 3) g *= 2.2;
+      if ((this.state === 'jump1' || this.state === 'jump2') && !input.jumpHeld && this.vy > 3 && this.stateTime > 0.08) g *= 2.2;
       this.vy = Math.max(this.vy - g * dt, -HERO.maxFall);
     }
     if (this.state === 'gp') this.vy = HERO.gpV;
@@ -305,7 +305,7 @@ export class Hero {
     // Ground snap: stay glued when running down slopes or off tiny ledges.
     if (!c.grounded && wasGrounded && !wasAir && this.vy <= 0) {
       _probe.set(this.position.x, this.position.y + 0.05, this.position.z);
-      const hit = physics.raycast(_probe, _down, 0.45, Layers.STATIC | Layers.TREE);
+      const hit = physics.raycast(_probe, _down, 0.45 + Math.abs(this.speed) * dt * 1.5, Layers.STATIC | Layers.TREE);
       if (hit) {
         this.position.y = hit.point.y;
         c.grounded = true;
@@ -344,7 +344,7 @@ export class Hero {
     } else if (!c.grounded && !this.busy) {
       // Walked off a ledge.
       this.setState('fall');
-      this.coyote = 0.1;
+      this.coyote = 0.15;
       this.lastJump = 0;
       this.peakY = this.position.y;
     } else if (c.grounded) {
@@ -368,8 +368,8 @@ export class Hero {
     }
 
     if (s === 'move' || s === 'land') {
-      if (s === 'land' && this.stateTime > 0.12) this.setState('move');
-      if (this.jumpBuffer > 0 && s === 'move') return this._jump();
+      if (s === 'land' && this.stateTime > 0.1) this.setState('move');
+      if (this.jumpBuffer > 0 && this.state === 'move') return this._jump();
       if (input.attack) {
         if (this.speed > 6) return this._dive(true);
         return this._punch(1);
@@ -438,6 +438,7 @@ export class Hero {
     }
 
     if (s === 'punch') {
+      if (this.jumpBuffer > 0 && this.stateTime > 0.1) return this._jump();
       this.speed = approach(this.speed, this.punchStage === 3 ? 2 : 0, 30 * dt);
       if (input.attack && this.stateTime > 0.08) this.punchQueued = true;
       const len = this.punchStage === 3 ? 0.38 : 0.26;
@@ -450,6 +451,10 @@ export class Hero {
 
     if (s === 'gpLand') {
       this.speed = 0;
+      if (this.jumpBuffer > 0 && this.stateTime > 0.15) {
+        this.lastJump = 0;
+        return this._jump();
+      }
       if (this.stateTime > 0.32) this.setState('move');
       return;
     }

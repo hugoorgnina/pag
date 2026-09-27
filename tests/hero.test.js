@@ -195,3 +195,26 @@ test('chained wall kicks climb a narrow shaft', () => {
   assert.ok(kicks >= 5, `kicks ${kicks}`);
   assert.ok(maxY > 12, `climbed to ${maxY}`);
 });
+
+test('a jump pressed just before touching down is not lost (even after a heavy landing)', () => {
+  for (const start of ['jump1', 'backflip']) {
+    const { ctx, hero } = setup();
+    hero.position.set(0, 0.3, 0);
+    hero.setState(start);
+    hero.vy = -6;
+    // Press jump one frame before landing, then release.
+    hero.step(DT, input({ jump: true, jumpHeld: true }), rig, ctx);
+    let jumped = false;
+    for (let i = 0; i < 20 && !jumped; i++) {
+      hero.step(DT, input(), rig, ctx);
+      jumped = hero.state.startsWith('jump') && hero.vy > 0;
+    }
+    assert.ok(jumped, `buffered jump after landing from ${start}`);
+  }
+});
+
+test('a quick tap still gives a real hop', () => {
+  const { ctx, hero } = setup();
+  const peak = run(hero, ctx, 90, (i) => input({ jump: i === 0, jumpHeld: i === 0 }));
+  assert.ok(peak > 0.9, `tap peak ${peak}`);
+});

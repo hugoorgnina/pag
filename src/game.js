@@ -541,7 +541,7 @@ export class Game {
 
   frame(timestamp) {
     this.timer.update(timestamp);
-    const dt = Math.min(this.timer.getDelta(), 0.1);
+    const dt = clamp(this.timer.getDelta(), 0, 0.1);
     this.time += dt;
     this.modeTime += dt;
     this._toastCooldown -= dt;
@@ -550,10 +550,14 @@ export class Game {
     const look = this.input.consumeLook();
     if (this.mode === 'playing') {
       this.rig.applyLook(look);
-      const actions = this.input.consumeActions();
       this._accumulator += dt;
       let steps = 0;
+      // Presses are only consumed by a frame that actually simulates: on
+      // 120/144 Hz screens many frames run zero steps, and reading input there
+      // used to throw jumps away.
+      let actions = null;
       while (this._accumulator >= FIXED_STEP && steps < 6 && this.mode === 'playing') {
+        if (!actions) actions = this.input.consumeActions();
         this.step(FIXED_STEP, actions);
         actions.jump = actions.attack = actions.crouchPressed = false;
         this._accumulator -= FIXED_STEP;
