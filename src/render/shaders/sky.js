@@ -32,7 +32,7 @@ const fragmentShader = /* glsl */ `
 
 export const SKY_HORIZON = new THREE.Color(0xbfe0f5);
 
-export function createSky() {
+export function createSky({ top = 0x2f7fd6, horizon = SKY_HORIZON, bottom = 0x6aa8c9 } = {}) {
   const material = new THREE.ShaderMaterial({
     name: 'SkyMaterial',
     vertexShader,
@@ -40,9 +40,9 @@ export function createSky() {
     side: THREE.BackSide,
     depthWrite: false,
     uniforms: {
-      uTop: { value: new THREE.Color(0x2f7fd6) },
-      uHorizon: { value: SKY_HORIZON.clone() },
-      uBottom: { value: new THREE.Color(0x6aa8c9) },
+      uTop: { value: new THREE.Color(top) },
+      uHorizon: { value: new THREE.Color(horizon) },
+      uBottom: { value: new THREE.Color(bottom) },
       uSunDir: { value: SUN_DIRECTION.clone() },
     },
   });

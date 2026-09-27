@@ -1,49 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta name="theme-color" content="#3d8fd9" />
-    <title>Orb Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#2f7fd6" />
+    <title>Pip: Aventura Estelar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" />
   </head>
   <body>
     <canvas id="game"></canvas>
 
     <div id="hud" class="hidden">
-      <div class="hud-left">
-        <div class="orbs"><span class="orb-icon"></span><span id="orb-count">0</span>/<span id="orb-total">12</span></div>
-        <div class="health"><div id="health-fill"></div></div>
+      <div class="hud-row">
+        <div class="stat"><span class="icon icon-pip"></span>×<span id="lives">4</span></div>
+        <div class="stat"><span class="icon icon-star">★</span>×<span id="star-count">0</span></div>
+        <div class="stat"><span class="icon icon-coin"></span>×<span id="coin-count">0</span></div>
       </div>
-      <div id="timer">0:00.0</div>
-      <button class="quality" type="button" title="Toggle quality (Q)">Quality: <span id="quality-label">High</span></button>
+      <div class="hud-right">
+        <canvas id="power" width="96" height="96" aria-label="Salud"></canvas>
+        <button class="quality" type="button" title="Cambiar calidad (Q)">Calidad: <span id="quality-label">Alta</span></button>
+      </div>
+      <div id="course-name"></div>
     </div>
 
-    <div id="alert">Spotted!</div>
+    <div id="red-counter"></div>
     <div id="toast"></div>
+    <div id="fade"></div>
     <pre id="debug" hidden></pre>
 
     <div id="overlay">
       <div class="panel">
-        <h1 id="overlay-title">Orb Runner</h1>
-        <div id="overlay-text">
-          <p>Recover the <b>12 glowing orbs</b> scattered across the island before the sentinels knock you out.</p>
-          <p>Sentinels only chase what they can <b>see</b>: break line of sight behind ruins, rocks and trees.</p>
-          <ul class="controls">
-            <li><kbd>W A S D</kbd> move</li>
-            <li><kbd>Mouse</kbd> look &middot; <kbd>Wheel</kbd> zoom</li>
-            <li><kbd>Shift</kbd> sprint &middot; <kbd>Space</kbd> jump</li>
-            <li><kbd>Q</kbd> quality &middot; <kbd>F3</kbd> stats &middot; <kbd>H</kbd> colliders</li>
-          </ul>
+        <h1 id="overlay-title">Pip: Aventura Estelar</h1>
+        <div id="overlay-text"></div>
+        <div class="buttons">
+          <button id="overlay-button" type="button">Jugar</button>
+          <button id="overlay-secondary" type="button" hidden>Volver</button>
         </div>
-        <button id="overlay-button" type="button">Play</button>
       </div>
     </div>
 
     <div id="touch-controls" hidden>
       <div id="look-pad"></div>
       <div id="stick"><div id="stick-knob"></div></div>
-      <button id="btn-sprint" type="button">Run</button>
-      <button id="btn-jump" type="button">Jump</button>
+      <button id="btn-crouch" type="button" aria-label="Agacharse / culatazo">Z</button>
+      <button id="btn-attack" type="button" aria-label="Puñetazo / plancha">B</button>
+      <button id="btn-jump" type="button" aria-label="Saltar">A</button>
     </div>
 
     <script type="module" src="/src/main.js"></script>

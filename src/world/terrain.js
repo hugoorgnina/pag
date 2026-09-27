@@ -7,7 +7,7 @@ import { clamp, createNoise2D, fbm, lerp, smoothstep } from '../core/math.js';
  * exactly what you stand on — without paying for a triangle-mesh collider.
  */
 export class Terrain {
-  constructor({ size = 240, segments = 192, seed = 1337, waterLevel = 0 } = {}) {
+  constructor({ size = 240, segments = 192, seed = 1337, waterLevel = 0, shape = null } = {}) {
     this.size = size;
     this.half = size / 2;
     this.segments = segments;
@@ -18,6 +18,7 @@ export class Terrain {
     this._noise = createNoise2D(seed);
     this._ridge = createNoise2D(seed + 1);
     this._tint = createNoise2D(seed + 2);
+    if (shape) this.shape = (x, z) => shape(x, z, this);
 
     this.heights = new Float32Array(this.stride * this.stride);
     this.minHeight = Infinity;

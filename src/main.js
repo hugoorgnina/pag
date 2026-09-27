@@ -6,7 +6,7 @@ try {
   window.game = new Game(canvas);
 } catch (err) {
   console.error(err);
-  document.getElementById('overlay-title').textContent = 'WebGL unavailable';
-  document.getElementById('overlay-text').textContent = 'This game needs a browser with WebGL 2 enabled.';
+  document.getElementById('overlay-title').textContent = 'WebGL no disponible';
+  document.getElementById('overlay-text').textContent = 'Este juego necesita un navegador con WebGL 2 activado.';
   document.getElementById('overlay-button').hidden = true;
 }

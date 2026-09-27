@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Orb Runner - a small third-person 3D browser game built with three.js",
+  "description": "Pip: Aventura Estelar - plataformas 3D para navegador hecho con three.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

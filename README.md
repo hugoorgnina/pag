@@ -1,56 +1,87 @@
-# pag — Orb Runner
+# pag — Pip: Aventura Estelar
 
-A small third-person 3D browser game built with [three.js](https://threejs.org) and Vite.
-Recover 12 glowing orbs scattered across a procedurally generated island while
-avoiding sentinel drones that hunt by line of sight.
+Un plataformas 3D para navegador hecho con [three.js](https://threejs.org) y Vite,
+inspirado en los plataformas 3D clásicos de los 90. Personaje, mundos, música y
+nombres son originales.
+
+Las estrellas que mantenían a flote el reino del cielo se han dispersado. Guía a
+**Pip** desde la Plaza del Cielo a través de tres mundos y recupera las 10 estrellas.
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # static build in dist/ (relative paths, host anywhere)
-npm test         # physics / LOD / math unit tests (node --test)
+npm run build    # build estático en dist/ (rutas relativas, se aloja en cualquier sitio)
+npm test         # pruebas de física, movimientos, LOD y matemáticas (node --test)
 ```
 
-## Controls
+## Controles
 
-| Input | Action |
+| Tecla | Acción |
 |-------|--------|
-| `W A S D` / arrows | Move (camera-relative) |
-| Mouse (click to lock) or drag | Orbit camera · wheel zooms |
-| `Shift` | Sprint (FOV widens with speed) |
-| `Space` | Jump (coyote time + input buffering) |
-| `Q` | Toggle High / Low quality |
-| `F3` or `` ` `` | Stats overlay: FPS, draw calls, triangles, LOD buckets |
-| `H` | Show the simple collision shapes behind the visuals |
-| `M` / `P` | Mute / pause |
+| `W A S D` / flechas | Mover (relativo a la cámara) |
+| Ratón (clic para capturar) o arrastrar | Cámara · rueda para zoom |
+| `Espacio` / `K` | Saltar (A) |
+| `E` / `J` / clic izquierdo | Puñetazo, patada, plancha (B) |
+| `Shift` / `C` / clic derecho | Agacharse; en el aire, culatazo (Z) |
+| `P` / `Esc` | Pausa |
+| `Q` · `F3` · `H` · `M` | Calidad · estadísticas · colisionadores · sonido |
 
-Touch devices get a virtual stick, a look pad and jump/run buttons.
-Force a preset with `?quality=low` or `?quality=high`.
+En móvil aparecen un joystick, una zona para mover la cámara y los botones A, B y Z.
+`?quality=low` o `?quality=high` fuerzan la calidad.
 
-## How the 3D principles map to code
+## Movimientos
 
-| Principle | Where |
-|-----------|-------|
-| **Frustum culling + LOD + batching** in one pass: every tree LOD level is a single `InstancedMesh`; instances are frustum-tested on the CPU each frame, bucketed by distance (near ≈100 tris → mid ≈⅓ → far crossed-quad billboard), and anything past the last threshold is dropped under fog | `src/render/instancedLOD.js`, `src/world/trees.js` |
-| **Batching** for all repeated props: ruins, crates, rocks and orbs each render in one draw call (~25 draw calls for the whole scene) | `src/world/level.js`, `src/entities/orbs.js` |
-| **Custom shaders** where they earn their keep: Gerstner-style water with depth tint and shore foam from a terrain height texture, toon shading for characters, fresnel orb glow, gradient sky | `src/render/shaders/` |
-| **Simple colliders, complex visuals**: boxes for ruins/crates/tree trunks, spheres for faceted rocks, a capsule for the player, a heightfield instead of a mesh collider for terrain | `src/physics/physics.js`, `src/world/terrain.js` |
-| **Layer-based filtering**: `STATIC`, `TREE`, … bitmasks decide what the camera, characters and vision rays collide with | `Layers` in `src/physics/physics.js` |
-| **Raycasting for line of sight**: rays walk the spatial hash with a 2D DDA, then march the heightfield; sentinels only chase what they can actually see | `PhysicsWorld.raycast`, `src/entities/sentinel.js` |
-| **Third-person camera feel**: frame-rate independent damping, look-ahead, spring-arm collision (snap in, ease out), speed-based FOV, trauma shake | `src/camera/thirdPersonCamera.js` |
-| **Lighting**: directional sun + hemisphere ambient, flickering point lights on braziers, one point light that follows the nearest orb, sentinel spot lights as readable vision cones | `src/game.js`, `src/world/level.js`, `src/entities/sentinel.js` |
-| **Shadow budget**: a single tight shadow frustum follows the player (a one-cascade setup) and is snapped to shadow-map texels to stop shimmering; **Low** quality disables real-time shadows and switches to blob shadows, drops spot lights, pixel ratio and LOD distances | `Game._updateSun`, `Game._createBlobShadows`, `QUALITY` |
+| Movimiento | Cómo |
+|------------|------|
+| Salto doble y triple | Salta justo al aterrizar; el triple necesita ir corriendo |
+| Salto largo | Corriendo: `Shift` + `Espacio` |
+| Voltereta hacia atrás | Quieto y agachado: `Espacio` |
+| Voltereta lateral | Corriendo, gira en seco hacia atrás y salta durante el derrape |
+| Salto de pared | Salta contra una pared y pulsa `Espacio` al tocarla |
+| Culatazo | En el aire: `Shift` |
+| Plancha | Corriendo: `E` (salta durante el deslizamiento para rodar) |
+| Combo de golpes | `E`, `E`, `E` en el suelo |
 
-## Project layout
+Pisar a los enemigos los derrota (mantén `Espacio` para rebotar más alto). Cada moneda
+cura una porción del medidor de salud, cada 50 monedas dan una vida extra y recoger las
+8 monedas rojas de un mundo hace aparecer una estrella.
+
+## Mundos
+
+| Mundo | Portal | Estrellas |
+|-------|--------|-----------|
+| Plaza del Cielo (central) | — | Lo alto de la Torre del Cielo |
+| Colinas Brisa | abierto | La cima del Pico Brisa · 8 monedas rojas · ¡Derrota al Rey Pedrusco! |
+| Fortaleza Celeste | ★ 2 | Cima de la fortaleza · Monedas rojas entre las nubes · El pozo de los saltos de pared |
+| Caldera Ardiente | ★ 5 | La corona del volcán · Monedas rojas sobre la lava · El islote de las barras de fuego |
+
+El progreso (estrellas) se guarda en el navegador.
+
+## Estructura
 
 ```
 src/
-  main.js, game.js          bootstrap, loop (fixed 60 Hz simulation), HUD, quality
-  core/                     math & noise, input, WebAudio sound effects
-  physics/physics.js        spatial hash, capsule resolution, raycasts
-  camera/                   third-person spring-arm camera
-  world/                    heightfield terrain, level layout, forest LOD
-  entities/                 player controller, sentinel AI, orbs & particles
-  render/                   instanced LOD system and GLSL shaders
-tests/                      node:test unit tests
+  main.js, game.js       arranque, flujo (título → plaza ↔ mundos), vidas, HUD, guardado
+  core/                  matemáticas y ruido, entrada, sonido y música chiptune generados
+  physics/physics.js     hash espacial, cajas/esferas/cilindros, plataformas móviles, raycasts
+  camera/                cámara en tercera persona con brazo elástico y seguimiento automático
+  entities/hero.js       Pip: máquina de estados con todo el repertorio de movimientos
+  entities/enemies.js    Bellotín, Zumbón, Rey Pedrusco (jefe) y barras de fuego
+  entities/collectibles.js  monedas instanciadas, estrellas, partículas
+  world/                 terreno, constructor de niveles (batching estático), árboles con LOD
+  levels/                un archivo por mundo + registro de estrellas
+  render/                shaders (agua, lava, toon, cielo, portales), texturas procedurales
+tests/                   pruebas con node:test
 ```
+
+## Técnica
+
+- **Batching**: toda la geometría estática de un mundo se fusiona por material, así que un
+  nivel entero son unas pocas llamadas de dibujo; monedas y árboles usan `InstancedMesh`.
+- **LOD + frustum culling** por instancia para el bosque (modelo completo → simplificado → billboard).
+- **Colisionadores simples**: cajas, esferas y cilindros detrás de visuales detallados; el terreno
+  es un heightfield en lugar de una malla.
+- **Shaders propios**: agua con espuma en la orilla, lava animada, sombreado toon, cielo en degradado y portales.
+- **Sombras**: un único frustum de sombra que sigue a Pip (ajustado a texel para que no parpadee) y una
+  sombra circular bajo el personaje, la señal de profundidad clásica del género.
+- **Simulación a 60 Hz fija**, independiente de la tasa de refresco.

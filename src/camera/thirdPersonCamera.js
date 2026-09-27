@@ -29,10 +29,13 @@ export class ThirdPersonCamera {
     this.baseFov = 62;
     this.trauma = 0;
     this.sensitivity = 0.0026;
+    this.floorY = -Infinity;
     this._time = 0;
+    this._sinceLook = 10;
   }
 
   applyLook({ x, y, zoom }) {
+    if (x || y) this._sinceLook = 0;
     this.yaw -= x * this.sensitivity;
     this.pitch = clamp(this.pitch + y * this.sensitivity, -0.35, 1.25);
     if (zoom) this.distance = clamp(this.distance + zoom * 0.8, this.minDistance, this.maxDistance);
@@ -53,6 +56,21 @@ export class ThirdPersonCamera {
 
   addTrauma(amount) {
     this.trauma = Math.min(1, this.trauma + amount);
+  }
+
+  /**
+   * Lakitu-style assist: when the player hasn't touched the camera for a
+   * while and is running, drift gently behind the direction of travel.
+   */
+  follow(dt, facing, speed01) {
+    this._sinceLook += dt;
+    if (this._sinceLook < 1.5 || speed01 < 0.3) return;
+    const behind = facing + Math.PI;
+    let d = (behind - this.yaw) % (Math.PI * 2);
+    if (d > Math.PI) d -= Math.PI * 2;
+    if (d < -Math.PI) d += Math.PI * 2;
+    if (Math.abs(d) > 2.6) return; // running at the camera: leave it be
+    this.yaw += d * (1 - Math.exp(-0.9 * speed01 * dt));
   }
 
   update(dt, target, velocity, speed01) {
@@ -85,6 +103,7 @@ export class ThirdPersonCamera {
     cam.position.copy(this.focus).addScaledVector(_dir, this.currentDistance);
     const t = this.physics.terrain;
     if (t) cam.position.y = Math.max(cam.position.y, t.heightAt(cam.position.x, cam.position.z) + 0.35, t.waterLevel + 0.3);
+    cam.position.y = Math.max(cam.position.y, this.floorY + 0.5);
 
     // Trauma shake (trauma² feels better than linear).
     const shake = this.trauma * this.trauma;
